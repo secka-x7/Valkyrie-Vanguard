@@ -1,0 +1,15 @@
+{
+  "name": "valkyrie-vanguard",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": { "start": "node src/index.js" },
+  "dependencies": {
+    "express": "^4.21.2",
+    "ws": "^8.21.0",
+    "sql.js": "^1.14.1",
+    "node-fetch": "^3.3.2",
+    "@noble/ed25519": "^2.1.0"
+  },
+  "engines": { "node": ">=20.0.0" }
+}

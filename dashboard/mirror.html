@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VALKYRIE MIRROR</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#06070a;--panel:#0b0d12;--panel2:#0f1118;--border:#181e2e;--line:#10141e;
+  --blue:#0a84ff;--blue2:#1a5fb4;--blue3:#3b82f6;--steel:#2d3a55;
+  --text:#dde2ee;--muted:#4a5470;--green:#16a34a;--amber:#c87d20;--red:#c0392b
+}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono','SF Mono',Consolas,monospace;font-size:12px;min-height:100vh}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:14px 28px;border-bottom:1px solid var(--border);background:var(--panel)}
+.brand{letter-spacing:8px;font-size:15px;font-weight:700}
+.brand span{color:var(--blue)}
+.live{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--muted)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+
+/* Treasury — top row */
+.treasury-row{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);margin-top:1px}
+.t-metric{background:var(--panel);padding:18px 22px;border-top:2px solid var(--blue2)}
+.t-label{font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:8px}
+.t-value{font-size:26px;font-weight:700;letter-spacing:-0.5px}
+.t-sub{font-size:10px;color:var(--steel);margin-top:5px}
+
+/* Operations */
+.ops{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);margin-top:1px}
+.op{background:var(--panel);padding:14px 18px}
+.op-name{font-size:9px;color:var(--blue);letter-spacing:2px;margin-bottom:6px}
+.op-val{font-size:13px;font-weight:600}
+.op-sub{font-size:10px;color:var(--muted);margin-top:3px}
+
+/* Main grid */
+.main{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:1px;background:var(--border);margin-top:1px}
+.panel{background:var(--panel);padding:18px 20px;max-height:360px;overflow-y:auto}
+.panel::-webkit-scrollbar{width:3px}
+.panel::-webkit-scrollbar-thumb{background:var(--border)}
+.panel-title{font-size:9px;color:var(--blue);letter-spacing:3px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+
+/* Controls */
+.controls{background:var(--panel);margin-top:1px;padding:20px 28px}
+.ctl-section{margin-bottom:20px}
+.ctl-section-title{font-size:9px;color:var(--blue);letter-spacing:2px;margin-bottom:14px}
+.ctl-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+.ctl-item{display:flex;flex-direction:column;gap:5px}
+.ctl-label{font-size:9px;color:var(--muted);display:flex;justify-content:space-between}
+.ctl-label span{color:var(--blue3)}
+.slider{-webkit-appearance:none;height:3px;background:var(--border);border-radius:1px;outline:none;width:100%}
+.slider::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:var(--blue);border-radius:50%;cursor:pointer}
+.ctl-select{background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:5px 8px;font-size:10px;font-family:inherit;width:100%}
+.ctl-input{background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:5px 8px;font-size:10px;font-family:inherit;width:100%;outline:none}
+.ctl-input:focus{border-color:var(--blue)}
+
+/* Withdraw */
+.withdraw-row{background:var(--panel);border-top:2px solid var(--blue2);margin-top:1px;padding:18px 28px}
+.wd-grid{display:grid;grid-template-columns:1fr 1fr 140px auto;gap:12px;align-items:end}
+.wd-field .wd-label{font-size:9px;color:var(--muted);margin-bottom:5px}
+.wd-input{background:#0a0a0d;border:1px solid var(--border);color:var(--text);padding:10px 12px;font-size:12px;font-family:inherit;outline:none;width:100%}
+.wd-input:focus{border-color:var(--blue)}
+.wd-select{background:#0a0a0d;border:1px solid var(--border);color:var(--text);padding:10px 12px;font-size:12px;font-family:inherit;width:100%}
+.wd-btn{background:var(--blue);color:#000;border:none;padding:10px 24px;font-size:11px;font-weight:700;letter-spacing:2px;cursor:pointer;white-space:nowrap}
+.wd-btn:hover{background:var(--blue3)}
+.wd-btn:disabled{background:var(--steel);cursor:not-allowed;color:var(--muted)}
+.wd-msg{font-size:10px;margin-top:8px;min-height:14px}
+.ok{color:var(--green)}.err{color:var(--red)}
+
+/* Ledger feed */
+.ledger-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--line);font-size:10px}
+.ledger-row:last-child{border-bottom:none}
+.ledger-fmt{color:var(--muted)}
+.ledger-amt{color:var(--blue3);font-weight:600}
+
+/* Reach */
+.reach-stat{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)}
+.reach-stat:last-child{border-bottom:none}
+.reach-label{color:var(--muted);font-size:10px}
+.reach-val{color:var(--text);font-size:10px;font-weight:600}
+
+/* Accumulate vectors */
+.vector-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--line);font-size:10px}
+.vector-id{color:var(--blue);font-weight:600}
+.vector-val{color:var(--text)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">VALKYRIE <span>VANGUARD</span> · MIRROR</div>
+  <div class="live">
+    <div class="dot" id="conn-dot" style="background:var(--amber)"></div>
+    <span id="conn-text">CONNECTING</span>
+    <span style="margin-left:16px" id="uptime">UP: 0s</span>
+    <span style="margin-left:16px" id="memory">0MB</span>
+  </div>
+</div>
+
+<!-- Treasury -->
+<div class="treasury-row">
+  <div class="t-metric"><div class="t-label">TOTAL REVENUE</div><div class="t-value" id="t-total">$0.00</div><div class="t-sub" id="t-delta"></div></div>
+  <div class="t-metric"><div class="t-label">SOURCE 1 · MESSAGE FEES</div><div class="t-value" id="t-s1">$0.00</div><div class="t-sub">Flat per format</div></div>
+  <div class="t-metric"><div class="t-label">SOURCE 2 · VALUE % (60%)</div><div class="t-value" id="t-s2">$0.00</div><div class="t-sub">Basis points on value</div></div>
+  <div class="t-metric"><div class="t-label">TODAY</div><div class="t-value" id="t-today">$0.00</div><div class="t-sub" id="t-hour">$0.00 / hr</div></div>
+  <div class="t-metric"><div class="t-label">WITHDRAWABLE</div><div class="t-value" id="t-wd">$0.00</div><div class="t-sub" id="t-withdrawn">Withdrawn: $0.00</div></div>
+</div>
+
+<!-- Operations -->
+<div class="ops">
+  <div class="op"><div class="op-name">DOMINION</div><div class="op-val" id="dom-status">INACTIVE</div><div class="op-sub" id="dom-checks">0 checks · 0 reprices</div></div>
+  <div class="op"><div class="op-name">REACH</div><div class="op-val" id="reach-total">0 destinations</div><div class="op-sub" id="reach-anchors">0 anchors connected</div></div>
+  <div class="op"><div class="op-name">ACCUMULATE</div><div class="op-val" id="acc-pursued">0 institutions</div><div class="op-sub" id="acc-bridges">0 bridge monopolies</div></div>
+</div>
+
+<!-- Main panels -->
+<div class="main">
+  <div class="panel" id="ledger-panel">
+    <div class="panel-title">LIVE LEDGER — REAL CREDITS ONLY</div>
+    <div id="ledger-feed"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">REACH STATISTICS</div>
+    <div id="reach-panel"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">ACCUMULATE VECTORS</div>
+    <div id="vector-panel"></div>
+  </div>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <!-- Source 1 fee controls -->
+  <div class="ctl-section">
+    <div class="ctl-section-title">SOURCE 1 — MESSAGE FEES (per format multiplier)</div>
+    <div class="ctl-grid">
+      <div class="ctl-item"><div class="ctl-label">SWIFT MX <span id="v-swift_mx">1.0x</span></div><input type="range" class="slider" min="0.1" max="5" value="1" step="0.1" data-key="fee_swift_mx" data-fmt="x"></div>
+      <div class="ctl-item"><div class="ctl-label">FEDWIRE <span id="v-fedwire">1.0x</span></div><input type="range" class="slider" min="0.1" max="5" value="1" step="0.1" data-key="fee_fedwire" data-fmt="x"></div>
+      <div class="ctl-item"><div class="ctl-label">CHIPS <span id="v-chips">1.0x</span></div><input type="range" class="slider" min="0.1" max="5" value="1" step="0.1" data-key="fee_chips" data-fmt="x"></div>
+      <div class="ctl-item"><div class="ctl-label">SEPA INST <span id="v-sepa_inst">1.0x</span></div><input type="range" class="slider" min="0.1" max="5" value="1" step="0.1" data-key="fee_sepa_inst" data-fmt="x"></div>
+      <div class="ctl-item"><div class="ctl-label">ACH ENTRY <span id="v-nacha_entry">1.0x</span></div><input type="range" class="slider" min="0.1" max="5" value="1" step="0.1" data-key="fee_nacha_entry" data-fmt="x"></div>
+    </div>
+  </div>
+
+  <!-- Source 2 controls (60% weight — PRIMARY) -->
+  <div class="ctl-section">
+    <div class="ctl-section-title">SOURCE 2 — VALUE % TIERS (basis point multipliers) — PRIMARY REVENUE</div>
+    <div class="ctl-grid">
+      <div class="ctl-item"><div class="ctl-label">&lt;$10K <span id="v-s2_tier_0_10k">1.0x</span></div><input type="range" class="slider" min="0.1" max="5" value="1" step="0.1" data-key="s2_tier_0_10k" data-fmt="x"></div>
+      <div class="ctl-item"><div class="ctl-label">$10K–$100K <span id="v-s2_tier_10k_100k">1.0x</span></div><input type="range" class="slider" min="0.1" max="5" value="1" step="0.1" data-key="s2_tier_10k_100k" data-fmt="x"></div>
+      <div class="ctl-item"><div class="ctl-label">$100K–$1M <span id="v-s2_tier_100k_1m">1.0x</span></div><input type="range" class="slider" min="0.1" max="5" value="1" step="0.1" data-key="s2_tier_100k_1m" data-fmt="x"></div>
+      <div class="ctl-item"><div class="ctl-label">$1M–$10M <span id="v-s2_tier_1m_10m">1.0x</span></div><input type="range" class="slider" min="0.1" max="5" value="1" step="0.1" data-key="s2_tier_1m_10m" data-fmt="x"></div>
+      <div class="ctl-item"><div class="ctl-label">$10M–$100M <span id="v-s2_tier_10m_100m">1.0x</span></div><input type="range" class="slider" min="0.1" max="5" value="1" step="0.1" data-key="s2_tier_10m_100m" data-fmt="x"></div>
+    </div>
+    <div class="ctl-grid" style="margin-top:10px">
+      <div class="ctl-item"><div class="ctl-label">$100M–$1B <span id="v-s2_tier_100m_1b">1.0x</span></div><input type="range" class="slider" min="0.1" max="5" value="1" step="0.1" data-key="s2_tier_100m_1b" data-fmt="x"></div>
+      <div class="ctl-item"><div class="ctl-label">$1B+ <span id="v-s2_tier_1b_plus">1.0x</span></div><input type="range" class="slider" min="0.1" max="5" value="1" step="0.1" data-key="s2_tier_1b_plus" data-fmt="x"></div>
+      <div class="ctl-item"><div class="ctl-label">S2 GLOBAL MULT <span id="v-s2_multiplier">1.0x</span></div><input type="range" class="slider" min="0.1" max="10" value="1" step="0.1" data-key="s2_multiplier" data-fmt="x"></div>
+      <div class="ctl-item"><div class="ctl-label">GLOBAL FEE RATE <span id="v-global_fee">5%</span></div><input type="range" class="slider" min="1" max="10" value="5" step="0.5" data-key="global_fee" data-fmt="pct"></div>
+    </div>
+  </div>
+
+  <!-- Propeller controls -->
+  <div class="ctl-section">
+    <div class="ctl-section-title">PROPELLER INTENSITY — 10 GENERAL PROPELLERS</div>
+    <div class="ctl-grid">
+      <div class="ctl-item"><div class="ctl-label">GP1 VOLUME <span id="v-gp1">10</span></div><input type="range" class="slider" min="0" max="10" value="10" data-key="gp1"></div>
+      <div class="ctl-item"><div class="ctl-label">GP2 CORRIDOR <span id="v-gp2">10</span></div><input type="range" class="slider" min="0" max="10" value="10" data-key="gp2"></div>
+      <div class="ctl-item"><div class="ctl-label">GP3 SPEED <span id="v-gp3">10</span></div><input type="range" class="slider" min="0" max="10" value="10" data-key="gp3"></div>
+      <div class="ctl-item"><div class="ctl-label">GP4 SIZE <span id="v-gp4">10</span></div><input type="range" class="slider" min="0" max="10" value="10" data-key="gp4"></div>
+      <div class="ctl-item"><div class="ctl-label">GP5 FORMAT <span id="v-gp5">10</span></div><input type="range" class="slider" min="0" max="10" value="10" data-key="gp5"></div>
+      <div class="ctl-item"><div class="ctl-label">GP6 TEMPORAL <span id="v-gp6">10</span></div><input type="range" class="slider" min="0" max="10" value="10" data-key="gp6"></div>
+      <div class="ctl-item"><div class="ctl-label">GP7 INTEL <span id="v-gp7">10</span></div><input type="range" class="slider" min="0" max="10" value="10" data-key="gp7"></div>
+      <div class="ctl-item"><div class="ctl-label">GP8 DOMINION <span id="v-gp8">10</span></div><input type="range" class="slider" min="0" max="10" value="10" data-key="gp8"></div>
+      <div class="ctl-item"><div class="ctl-label">GP9 CORRIDOR <span id="v-gp9">10</span></div><input type="range" class="slider" min="0" max="10" value="10" data-key="gp9"></div>
+      <div class="ctl-item"><div class="ctl-label">GP10 PROTOCOL <span id="v-gp10">10</span></div><input type="range" class="slider" min="0" max="10" value="10" data-key="gp10"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Withdrawal -->
+<div class="withdraw-row">
+  <div class="panel-title">TREASURY WITHDRAWAL</div>
+  <div class="wd-grid">
+    <div class="wd-field"><div class="wd-label">AMOUNT (USD)</div><input type="number" class="wd-input" id="wd-amount" placeholder="0.00" min="0.01" step="0.01"></div>
+    <div class="wd-field"><div class="wd-label">DESTINATION NUMBER</div><input type="text" class="wd-input" id="wd-dest" placeholder="7XXXXXXX"></div>
+    <div class="wd-field"><div class="wd-label">NETWORK</div><select class="wd-select" id="wd-network"><option value="wave">WAVE</option><option value="afrimoney">AFRIMONEY</option></select></div>
+    <button class="wd-btn" id="wd-btn" onclick="doWithdraw()">WITHDRAW</button>
+  </div>
+  <div class="wd-msg" id="wd-msg"></div>
+</div>
+
+<script>
+let ws, _prev = 0
+
+const $ = id => document.getElementById(id)
+
+function connect() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:'
+  ws = new WebSocket(`${proto}//${location.host}`)
+  ws.onopen = () => {
+    $('conn-dot').style.background = 'var(--green)'
+    $('conn-text').textContent = 'LIVE'
+    fetch('/api/state').then(r => r.json()).then(render).catch(() => {})
+    fetch('/api/controls').then(r => r.json()).then(syncControls).catch(() => {})
+  }
+  ws.onmessage = e => { try { const m = JSON.parse(e.data); handleMsg(m) } catch {} }
+  ws.onclose = () => { $('conn-dot').style.background='var(--amber)'; $('conn-text').textContent='RECONNECTING'; setTimeout(connect, 2500) }
+  ws.onerror = () => ws.close()
+}
+
+function handleMsg(m) {
+  if (m.type === 'tick' && m.data) render(m.data)
+  if (m.type === 'controls' && m.data) syncControls(m.data)
+  if (m.type === 'ledger_credit' || m.type === 'message_processed') pushLedger(m.data)
+  if (m.type === 'dominion') updateDominion(m.data)
+  if (m.type === 'rush') updateReach(m.data)
+  if (m.type === 'flywheel') updateVectors(m.data)
+}
+
+function pushLedger(d) {
+  if (!d) return
+  const row = document.createElement('div')
+  row.className = 'ledger-row'
+  const fmt = d.format || d.originFormat || '—'
+  const amt = d.fees?.total || d.totalMinor || '0'
+  row.innerHTML = `<span class="ledger-fmt">${fmt.toUpperCase().slice(0,20)}</span><span class="ledger-amt">+$${(Number(BigInt(amt))/100).toFixed(4)}</span>`
+  const feed = $('ledger-feed')
+  feed.insertBefore(row, feed.firstChild)
+  while (feed.children.length > 30) feed.removeChild(feed.lastChild)
+}
+
+function updateDominion(d) {
+  if (!d) return
+  $('dom-status').textContent  = d.allConfirmed ? 'CONFIRMED' : 'MONITORING'
+  $('dom-status').style.color  = d.allConfirmed ? 'var(--green)' : 'var(--amber)'
+  $('dom-checks').textContent  = `${d.checks || 0} checks · ${d.reprices || 0} reprices`
+}
+
+function updateReach(d) {
+  if (!d) return
+  $('reach-total').textContent   = `${(d.totalReachable||0).toLocaleString()} destinations`
+  $('reach-anchors').textContent = `${(d.anchors||0)} anchors connected`
+  $('reach-panel').innerHTML = `
+    <div class="reach-stat"><span class="reach-label">Total Reachable</span><span class="reach-val">${(d.totalReachable||0).toLocaleString()}</span></div>
+    <div class="reach-stat"><span class="reach-label">Active Anchors</span><span class="reach-val">${d.anchors||0}</span></div>
+    <div class="reach-stat"><span class="reach-label">Direct Nodes</span><span class="reach-val">${d.directNodes||0}</span></div>
+    <div class="reach-stat"><span class="reach-label">Newly Reachable</span><span class="reach-val">+${d.newlyReachable||0}</span></div>
+  `
+}
+
+function updateVectors(d) {
+  if (!d?.stats) return
+  const vf = d.stats.vectorFires || {}
+  $('vector-panel').innerHTML = Object.entries(vf).map(([v, count]) => `
+    <div class="vector-row"><span class="vector-id">V${v}</span><span class="vector-val">${count.toLocaleString()} fires</span></div>`).join('') ||
+    '<div style="font-size:10px;color:var(--muted)">Vectors initializing...</div>'
+  $('acc-pursued').textContent = `${(d.stats.institutionsPursued||0).toLocaleString()} institutions`
+  $('acc-bridges').textContent = `${(d.stats.bridgeMonopolies||0).toLocaleString()} bridge monopolies`
+}
+
+function render(d) {
+  if (!d) return
+  const t = d.treasury || {}
+
+  $('t-total').textContent    = '$' + (t.totalUSD || '0.00')
+  $('t-s1').textContent       = '$' + fmtM(Number(t.source1Minor||'0')/100)
+  $('t-s2').textContent       = '$' + fmtM(Number(t.source2Minor||'0')/100)
+  $('t-today').textContent    = '$' + (t.todayUSD || '0.00')
+  $('t-hour').textContent     = '$' + (t.hourUSD || '0.00') + ' / hr'
+  $('t-wd').textContent       = '$' + (t.withdrawableUSD || '0.00')
+  $('t-withdrawn').textContent= 'Withdrawn: $' + fmtM(Number(t.withdrawnMinor||'0')/100)
+
+  const total = parseFloat(t.totalUSD || '0')
+  const delta = total - _prev
+  if (delta > 0.001) $('t-delta').textContent = '+$' + delta.toFixed(4) + ' since last tick'
+  _prev = total
+
+  updateDominion(d.dominion)
+
+  const reach = d.reach || {}
+  $('reach-total').textContent   = `${(reach.reachable||0).toLocaleString()} destinations`
+  $('reach-anchors').textContent = `${(reach.anchors||0)} anchors connected`
+
+  const recent = d.recent || []
+  if (recent.length && !$('ledger-feed').children.length) {
+    $('ledger-feed').innerHTML = recent.slice(0, 20).map(r => `
+      <div class="ledger-row">
+        <span class="ledger-fmt">${(r.format||'—').toUpperCase().slice(0,20)}</span>
+        <span class="ledger-amt">+$${((Number(r.source1_minor||0)+Number(r.source2_minor||0)+Number(r.additional_minor||0))/100).toFixed(4)}</span>
+      </div>`).join('')
+  }
+
+  $('uptime').textContent  = 'UP: ' + fmtTime(d.uptime || 0)
+  $('memory').textContent  = (d.memory || 0) + 'MB'
+}
+
+function syncControls(c) {
+  if (!c) return
+  document.querySelectorAll('.slider').forEach(s => {
+    const k   = s.dataset.key
+    const fmt = s.dataset.fmt
+    if (c[k] !== undefined) {
+      s.value = fmt === 'pct' ? c[k] * 100 : c[k]
+      const el = $('v-' + k)
+      if (el) el.textContent = fmt === 'pct' ? (c[k] * 100).toFixed(1) + '%' : fmt === 'x' ? c[k] + 'x' : c[k]
+    }
+  })
+}
+
+document.querySelectorAll('.slider').forEach(el => {
+  el.addEventListener('input', () => {
+    const key = el.dataset.key, fmt = el.dataset.fmt
+    let value = parseFloat(el.value)
+    if (fmt === 'pct') value = value / 100
+    const display = fmt === 'pct' ? (value * 100).toFixed(1) + '%' : fmt === 'x' ? value + 'x' : value
+    const label = $('v-' + key); if (label) label.textContent = display
+    fetch('/api/controls', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ key, value }) }).catch(() => {})
+  })
+})
+
+async function doWithdraw() {
+  const amount = parseFloat($('wd-amount').value)
+  const dest   = $('wd-dest').value.trim()
+  const net    = $('wd-network').value
+  const btn    = $('wd-btn'), msg = $('wd-msg')
+  msg.textContent = ''; msg.className = 'wd-msg'
+  if (!amount || amount <= 0) { msg.textContent = 'Enter valid amount'; msg.className = 'wd-msg err'; return }
+  if (!dest) { msg.textContent = 'Enter destination number'; msg.className = 'wd-msg err'; return }
+  btn.disabled = true; btn.textContent = 'PROCESSING'
+  try {
+    const r    = await fetch('/api/withdraw', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ amount, destination: dest, network: net }) })
+    const data = await r.json()
+    if (data.ok) { msg.textContent = `Initiated — ref ${data.ref}`; msg.className = 'wd-msg ok'; $('wd-amount').value = '' }
+    else { msg.textContent = data.error || 'Failed'; msg.className = 'wd-msg err' }
+  } catch (e) { msg.textContent = e.message; msg.className = 'wd-msg err' }
+  btn.disabled = false; btn.textContent = 'WITHDRAW'
+}
+
+function fmtM(n) {
+  if (!n) return '0.00'
+  if (n >= 1e9) return (n/1e9).toFixed(2) + 'B'
+  if (n >= 1e6) return (n/1e6).toFixed(2) + 'M'
+  if (n >= 1e3) return (n/1e3).toFixed(2) + 'K'
+  return n.toFixed(2)
+}
+function fmtTime(s) {
+  if (s < 60) return s + 's'
+  if (s < 3600) return Math.floor(s/60) + 'm ' + (s%60) + 's'
+  return Math.floor(s/3600) + 'h ' + Math.floor((s%3600)/60) + 'm'
+}
+
+connect()
+</script>
+</body>
+</html>

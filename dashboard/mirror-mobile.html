@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>VALKYRIE MIRROR</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--bg:#06070a;--panel:#0b0d12;--border:#181e2e;--blue:#0a84ff;--blue3:#3b82f6;--text:#dde2ee;--muted:#4a5470;--green:#16a34a;--amber:#c87d20;--red:#c0392b;--steel:#2d3a55}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono','SF Mono',Consolas,monospace;font-size:12px;padding-bottom:70px}
+.topbar{padding:12px 16px;border-bottom:1px solid var(--border);background:var(--panel);display:flex;justify-content:space-between;align-items:center}
+.brand{font-size:12px;letter-spacing:4px;font-weight:700}.brand span{color:var(--blue)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--amber)}
+.tabs{display:flex;border-bottom:1px solid var(--border);background:var(--panel)}
+.tab{flex:1;padding:10px 0;text-align:center;font-size:9px;letter-spacing:1px;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.page{display:none;padding:14px}.page.active{display:block}
+.metric{background:var(--panel);border:1px solid var(--border);border-top:2px solid var(--steel);padding:14px;margin-bottom:8px}
+.metric.primary{border-top-color:var(--blue)}
+.m-label{font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:6px}
+.m-value{font-size:22px;font-weight:700}
+.m-sub{font-size:10px;color:var(--steel);margin-top:4px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.ctl-item{margin-bottom:14px}
+.ctl-label{font-size:9px;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:5px}
+.ctl-label span{color:var(--blue3)}
+.slider{-webkit-appearance:none;width:100%;height:4px;background:var(--border);border-radius:2px}
+.slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;background:var(--blue);border-radius:50%}
+.section-title{font-size:9px;color:var(--blue);letter-spacing:2px;margin:14px 0 10px}
+.wd-field{margin-bottom:10px}
+.wd-label{font-size:9px;color:var(--muted);margin-bottom:5px}
+.wd-input,.wd-select{width:100%;background:#0a0a0d;border:1px solid var(--border);color:var(--text);padding:10px;font-size:12px;font-family:inherit}
+.wd-btn{width:100%;background:var(--blue);color:#000;border:none;padding:12px;font-size:11px;font-weight:700;letter-spacing:2px;margin-top:8px;cursor:pointer}
+.wd-msg{font-size:10px;margin-top:8px}.ok{color:var(--green)}.err{color:var(--red)}
+.ledger-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #0d1018;font-size:10px}
+.ledger-amt{color:var(--blue3);font-weight:600}
+.reach-stat{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #0d1018;font-size:10px}
+.reach-val{color:var(--text);font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">VALKYRIE <span>V</span></div>
+  <div style="display:flex;align-items:center;gap:6px">
+    <div class="dot" id="conn-dot"></div>
+    <span style="font-size:9px" id="conn-text">CONNECTING</span>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-page="revenue">REVENUE</div>
+  <div class="tab" data-page="reach">REACH</div>
+  <div class="tab" data-page="controls">CONTROLS</div>
+  <div class="tab" data-page="withdraw">WITHDRAW</div>
+</div>
+
+<!-- Revenue -->
+<div class="page active" id="page-revenue">
+  <div class="metric primary"><div class="m-label">TOTAL REVENUE</div><div class="m-value" id="t-total">$0.00</div><div class="m-sub" id="t-delta"></div></div>
+  <div class="grid2">
+    <div class="metric"><div class="m-label">SOURCE 2 (60%)</div><div class="m-value" id="t-s2">$0.00</div></div>
+    <div class="metric"><div class="m-label">SOURCE 1</div><div class="m-value" id="t-s1">$0.00</div></div>
+  </div>
+  <div class="grid2">
+    <div class="metric"><div class="m-label">TODAY</div><div class="m-value" id="t-today">$0.00</div></div>
+    <div class="metric"><div class="m-label">THIS HOUR</div><div class="m-value" id="t-hour">$0.00</div></div>
+  </div>
+  <div class="metric"><div class="m-label">WITHDRAWABLE</div><div class="m-value" id="t-wd">$0.00</div><div class="m-sub" id="t-withdrawn"></div></div>
+  <div class="section-title">LIVE LEDGER</div>
+  <div id="ledger-feed"></div>
+</div>
+
+<!-- Reach -->
+<div class="page" id="page-reach">
+  <div class="metric primary"><div class="m-label">REACH STATUS</div><div class="m-value" id="dom-status">INACTIVE</div><div class="m-sub" id="dom-checks"></div></div>
+  <div class="metric"><div class="m-label">REACHABLE DESTINATIONS</div><div class="m-value" id="reach-total">0</div></div>
+  <div class="reach-stat"><span style="color:var(--muted)">Active Anchors</span><span class="reach-val" id="reach-anchors">0</span></div>
+  <div class="reach-stat"><span style="color:var(--muted)">Bridge Monopolies</span><span class="reach-val" id="acc-bridges">0</span></div>
+  <div class="reach-stat"><span style="color:var(--muted)">Institutions Pursued</span><span class="reach-val" id="acc-pursued">0</span></div>
+  <div class="reach-stat"><span style="color:var(--muted)">Formats Expanded</span><span class="reach-val" id="acc-formats">0</span></div>
+</div>
+
+<!-- Controls -->
+<div class="page" id="page-controls">
+  <div class="section-title">SOURCE 2 — VALUE % (PRIMARY)</div>
+  <div class="ctl-item"><div class="ctl-label">S2 GLOBAL MULTIPLIER <span id="v-s2_multiplier">1.0x</span></div><input type="range" class="slider" min="0.1" max="10" value="1" step="0.1" data-key="s2_multiplier" data-fmt="x"></div>
+  <div class="ctl-item"><div class="ctl-label">GLOBAL FEE RATE <span id="v-global_fee">5%</span></div><input type="range" class="slider" min="1" max="10" value="5" step="0.5" data-key="global_fee" data-fmt="pct"></div>
+  <div class="section-title">PROPELLER INTENSITY</div>
+  <div class="ctl-item"><div class="ctl-label">GP1 VOLUME <span id="v-gp1">10</span></div><input type="range" class="slider" min="0" max="10" value="10" data-key="gp1"></div>
+  <div class="ctl-item"><div class="ctl-label">GP4 SIZE <span id="v-gp4">10</span></div><input type="range" class="slider" min="0" max="10" value="10" data-key="gp4"></div>
+  <div class="ctl-item"><div class="ctl-label">GP6 TEMPORAL <span id="v-gp6">10</span></div><input type="range" class="slider" min="0" max="10" value="10" data-key="gp6"></div>
+  <div class="ctl-item"><div class="ctl-label">GP8 DOMINION <span id="v-gp8">10</span></div><input type="range" class="slider" min="0" max="10" value="10" data-key="gp8"></div>
+</div>
+
+<!-- Withdraw -->
+<div class="page" id="page-withdraw">
+  <div class="metric primary"><div class="m-label">WITHDRAWABLE</div><div class="m-value" id="wd-available">$0.00</div></div>
+  <div class="wd-field"><div class="wd-label">AMOUNT (USD)</div><input type="number" class="wd-input" id="wd-amount" placeholder="0.00"></div>
+  <div class="wd-field"><div class="wd-label">DESTINATION NUMBER</div><input type="text" class="wd-input" id="wd-dest" placeholder="7XXXXXXX"></div>
+  <div class="wd-field"><div class="wd-label">NETWORK</div><select class="wd-select" id="wd-network"><option value="wave">WAVE</option><option value="afrimoney">AFRIMONEY</option></select></div>
+  <button class="wd-btn" onclick="doWithdraw()">WITHDRAW</button>
+  <div class="wd-msg" id="wd-msg"></div>
+</div>
+
+<script>
+let ws, _prev = 0
+const $ = id => document.getElementById(id)
+
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab,.page').forEach(x => x.classList.remove('active'))
+  t.classList.add('active')
+  $('page-' + t.dataset.page).classList.add('active')
+}))
+
+function connect() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:'
+  ws = new WebSocket(`${proto}//${location.host}`)
+  ws.onopen = () => { $('conn-dot').style.background='var(--green)'; $('conn-text').textContent='LIVE'; fetch('/api/state').then(r=>r.json()).then(render).catch(()=>{}) }
+  ws.onmessage = e => { try { const m=JSON.parse(e.data); if(m.type==='tick'&&m.data)render(m.data); if(m.type==='ledger_credit'||m.type==='message_processed')pushLedger(m.data) } catch {} }
+  ws.onclose = () => { $('conn-dot').style.background='var(--amber)'; $('conn-text').textContent='RECONNECTING'; setTimeout(connect,2500) }
+  ws.onerror = () => ws.close()
+}
+
+function pushLedger(d) {
+  if(!d)return
+  const row=document.createElement('div'); row.className='ledger-row'
+  const fmt=d.format||'—', amt=d.fees?.total||d.totalMinor||'0'
+  row.innerHTML=`<span style="color:var(--muted)">${fmt.toUpperCase().slice(0,18)}</span><span class="ledger-amt">+$${(Number(BigInt(amt))/100).toFixed(4)}</span>`
+  const feed=$('ledger-feed'); feed.insertBefore(row,feed.firstChild)
+  while(feed.children.length>15)feed.removeChild(feed.lastChild)
+}
+
+function render(d) {
+  if(!d)return
+  const t=d.treasury||{}
+  $('t-total').textContent='$'+fmtM(parseFloat(t.totalUSD||'0'))
+  $('t-s1').textContent='$'+fmtM(Number(t.source1Minor||'0')/100)
+  $('t-s2').textContent='$'+fmtM(Number(t.source2Minor||'0')/100)
+  $('t-today').textContent='$'+(t.todayUSD||'0.00')
+  $('t-hour').textContent='$'+(t.hourUSD||'0.00')
+  $('t-wd').textContent='$'+(t.withdrawableUSD||'0.00')
+  $('wd-available').textContent='$'+(t.withdrawableUSD||'0.00')
+  $('t-withdrawn').textContent='Withdrawn: $'+fmtM(Number(t.withdrawnMinor||'0')/100)
+  const total=parseFloat(t.totalUSD||'0'), delta=total-_prev
+  if(delta>0.001)$('t-delta').textContent='+$'+delta.toFixed(4)+' since last tick'
+  _prev=total
+  const dom=d.dominion||{}
+  $('dom-status').textContent=dom.checks>0?'ACTIVE':'INITIALIZING'
+  $('dom-checks').textContent=`${dom.checks||0} checks`
+  const reach=d.reach||{}
+  $('reach-total').textContent=(reach.reachable||0).toLocaleString()
+  $('reach-anchors').textContent=reach.anchors||0
+  const acc=d.accumulate||{}
+  $('acc-pursued').textContent=(acc.institutionsPursued||0).toLocaleString()
+  $('acc-bridges').textContent=(acc.bridgeMonopolies||0).toLocaleString()
+  $('acc-formats').textContent=(acc.formatsExpanded||0).toLocaleString()
+}
+
+document.querySelectorAll('.slider').forEach(el => {
+  el.addEventListener('input',()=>{
+    const key=el.dataset.key, fmt=el.dataset.fmt
+    let val=parseFloat(el.value)
+    if(fmt==='pct')val=val/100
+    const lbl=$('v-'+key); if(lbl)lbl.textContent=fmt==='pct'?(val*100).toFixed(1)+'%':fmt==='x'?val+'x':val
+    fetch('/api/controls',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key,value:val})}).catch(()=>{})
+  })
+})
+
+async function doWithdraw() {
+  const amount=parseFloat($('wd-amount').value), dest=$('wd-dest').value.trim(), net=$('wd-network').value
+  const msg=$('wd-msg'); msg.textContent=''; msg.className='wd-msg'
+  if(!amount||!dest){msg.textContent='Enter amount and destination';msg.className='wd-msg err';return}
+  try{
+    const r=await fetch('/api/withdraw',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount,destination:dest,network:net})})
+    const data=await r.json()
+    if(data.ok){msg.textContent=`Done — ref ${data.ref}`;msg.className='wd-msg ok';$('wd-amount').value=''}
+    else{msg.textContent=data.error||'Failed';msg.className='wd-msg err'}
+  }catch(e){msg.textContent=e.message;msg.className='wd-msg err'}
+}
+
+function fmtM(n){if(!n)return'0.00';if(n>=1e9)return(n/1e9).toFixed(2)+'B';if(n>=1e6)return(n/1e6).toFixed(2)+'M';if(n>=1e3)return(n/1e3).toFixed(2)+'K';return n.toFixed(2)}
+connect()
+</script>
+</body>
+</html>
